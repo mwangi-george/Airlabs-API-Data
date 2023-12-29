@@ -5,9 +5,6 @@ nearbyAirportsAndCitiesUi <- function(id) {
   )
 }
 
-
-
-
 nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userDistance, triggerId, requiredOutput) {
   moduleServer(id, function(input, output, session) {
     df <- eventReactive(triggerId, {
@@ -23,7 +20,7 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
         fromJSON()
 
       if (requiredOutput == "cities") {
-        citiesDf <- apiResultsList$response$cities %>% 
+        citiesDf <- apiResultsList$response$cities %>%
           relocate(country_code) %>%
           arrange(desc(popularity)) %>%
           rename(
@@ -34,10 +31,10 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
             Popularity = popularity,
             Distance = distance
           )
-        
+
         return(citiesDf)
       } else {
-        airportsDf <- apiResultsList$response$airports %>% 
+        airportsDf <- apiResultsList$response$airports %>%
           relocate(country_code) %>%
           arrange(desc(popularity)) %>%
           rename(
@@ -50,11 +47,11 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
             Popularity = popularity,
             Distance = distance
           )
-        
+
         return(airportsDf)
       }
     })
-    
+
     if (requiredOutput == "cities") {
       output$nearbyCitiesOrAirportsTable <- render_gt({
         output$downloadNearbyCitiesData <- downloadHandler(
@@ -65,7 +62,7 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
             write.csv(df(), file)
           }
         )
-        
+
         df() %>%
           gt() %>%
           tab_header(
@@ -92,7 +89,7 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
             write.csv(df(), file)
           }
         )
-        
+
         df() %>%
           gt() %>%
           tab_header(
