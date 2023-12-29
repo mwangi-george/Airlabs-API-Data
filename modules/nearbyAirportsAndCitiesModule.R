@@ -12,7 +12,7 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
   moduleServer(id, function(input, output, session) {
     df <- eventReactive(triggerId, {
       apiBase <- "https://airlabs.co/api/v9/nearby"
-      apiKey <- "8112ce34-bcbf-4246-9dac-8fa34dd14f3a"
+      apiKey <- Sys.getenv("airLabsApiKey")
 
       nearbyAPI <- str_c(
         apiBase, "?lat=", userLatitude, "&lng=", userLongitude, "&distance=", userDistance, "&api_key=", apiKey
