@@ -1,0 +1,237 @@
+---
+title: "Time GPT"
+author: "George N. Mwangi"
+date: "2023-11-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+pacman::p_load(tidyverse)
+```
+
+
+
+```{r}
+library(httr)
+library(jsonlite)
+
+api_base <- 'http://airlabs.co/api/v9/'
+method <- 'ping'
+
+params <- list(
+  'api_key' = '8112ce34-bcbf-4246-9dac-8fa34dd14f3a',
+  'flag' = 'KE'
+)
+
+api_result <- GET(paste0(api_base, method), query = params)
+api_response <- content(api_result, as = "text", encoding = "UTF-8")
+
+rawToChar(api_response)
+
+read.csv(text = (api_response))
+
+api_response_json <- jsonlite::prettify(jsonlite::fromJSON(api_response))
+
+cat(api_response_json)
+
+
+
+```
+
+
+```{r}
+library(jsonlite)
+
+# Your JSON string
+json_string <- "{\"request\":{\"lang\":\"en\",\"currency\":\"USD\",\"time\":0,\"id\":\"7iw31rk784g\",\"server\":\"e\",\"host\":\"airlabs.co\",\"pid\":1365519,\"key\":{\"id\":28958,\"api_key\":\"8112ce34-bcbf-4246-9dac-8fa34dd14f3a\",\"type\":\"free\",\"expired\":\"2024-01-14T23:00:00.000Z\",\"registered\":\"2023-12-16T17:31:14.000Z\",\"upgraded\":null,\"limits_by_hour\":2500,\"limits_by_minute\":250,\"limits_by_month\":1000,\"limits_total\":998},\"params\":{\"flag\":\"KE\",\"lang\":\"en\"},\"version\":9,\"method\":\"ping\",\"client\":{\"ip\":\"41.212.63.46\",\"geo\":{\"country_code\":\"KE\",\"country\":\"Kenya\",\"continent\":\"Africa\",\"city\":\"Nairobi\",\"lat\":-1.2841,\"lng\":36.8155,\"timezone\":\"Africa/Nairobi\"},\"connection\":{\"type\":\"cable/dsl\",\"isp_code\":15399,\"isp_name\":\"WANANCHI-\"},\"device\":{},\"agent\":{},\"karma\":{\"is_blocked\":false,\"is_crawler\":false,\"is_bot\":false,\"is_friend\":false,\"is_regular\":true}}},\"response\":\"pong\",\"terms\":\"Unauthorized access is prohibited and punishable by law. \\nReselling data 'As Is' without AirLabs.Co permission is strictly prohibited. \\nFull terms on https://airlabs.co/. \\nContact us info@airlabs.co\"}"
+
+# Convert JSON string to a list
+parsed_json <- fromJSON(api_response)
+
+# Extract relevant information into a data frame
+df <- data.frame(
+  language = parsed_json$request$lang,
+  currency = parsed_json$request$currency,
+  time = parsed_json$request$time,
+  id = parsed_json$request$id,
+  server = parsed_json$request$server,
+  host = parsed_json$request$host,
+  pid = parsed_json$request$pid,
+  api_key = parsed_json$request$key$api_key,
+  key_type = parsed_json$request$key$type,
+  expired = parsed_json$request$key$expired,
+  registered = parsed_json$request$key$registered,
+  limits_by_hour = parsed_json$request$key$limits_by_hour,
+  limits_by_minute = parsed_json$request$key$limits_by_minute,
+  limits_by_month = parsed_json$request$key$limits_by_month,
+  limits_total = parsed_json$request$key$limits_total,
+  response = parsed_json$response,
+  terms = parsed_json$terms,
+  stringsAsFactors = FALSE
+)
+
+# View the resulting data frame
+print(df)
+
+```
+
+
+```{r}
+library(httr)
+library(jsonlite)
+
+# API endpoint and parameters
+api_base <- 'https://airlabs.co/api/v9/flights'
+api_key <- '8112ce34-bcbf-4246-9dac-8fa34dd14f3a'  # Replace with your actual API key
+dep_icao_code <- 'HKJK'  # ICAO code for Jomo Kenyatta International Airport (JKIA)
+
+# Construct the API request URL
+request_url <- paste0(api_base, "?dep_icao=", dep_icao_code, "&api_key=", api_key)
+
+# Make the GET request
+api_result <- GET(request_url)
+
+# Check the status of the API request
+if (http_type(api_result) == "application/json") {
+  # Parse JSON response
+  api_response <- content(api_result, as = "text", encoding = "UTF-8")
+  flights_data <- fromJSON(api_response)
+  
+  # Display the flight data
+  print(flights_data)
+} else {
+  # If there's an error
+  print("Error: Unable to fetch flight data.")
+}
+
+
+unix_timestamp <- 1702754557
+
+# Convert UNIX timestamp to a POSIXct object (representing a specific date and time)
+date_time <- as.POSIXct(unix_timestamp, origin = "1970-01-01", tz = "UTC")
+
+# Display the converted date and time
+print(date_time)
+
+flights_data$response %>% 
+  mutate(updated =  as.POSIXct(updated, origin = "1970-01-01", tz = "UTC"))
+```
+
+
+```{r}
+apiResultsDf <- flights_data$response
+
+apiResultsDf %>% 
+  mutate(updated =  as.POSIXct(updated, origin = "1970-01-01", tz = "UTC")) %>% 
+  select(
+    flag, reg_number, alt, speed, flight_icao, dep_icao, arr_icao, updated, status
+  )
+```
+
+```{r}
+delaysAPI <- "https://airlabs.co/api/v9/delays?delay=60&type=departures&flag=US&api_key=8112ce34-bcbf-4246-9dac-8fa34dd14f3a"
+
+
+delaysGetResults <- GET(delaysAPI) %>% content(as = "text", encoding = "UTF-8")
+
+delaysDf <- fromJSON(delaysGetResults)$response 
+
+delaysDf %>% 
+  filter(dep_icao == "HKJK")
+```
+
+
+```{r}
+nearByAPI <- "https://airlabs.co/api/v9/nearby?lat=-1.2841&lng=36.8155&distance=200&api_key=8112ce34-bcbf-4246-9dac-8fa34dd14f3a"
+
+nearByGetResults <- GET(nearByAPI) %>%
+  content(as = "text", encoding = "UTF-8") %>% 
+  fromJSON()
+
+nearByGetResults$response$airports %>%
+  relocate(country_code) %>% 
+  arrange(desc(popularity)) %>% 
+  rename(
+    `Airport Name` = name,
+    `IATA Code` = iata_code,
+    `ICAO Code` = icao_code,
+    `Country Code` = country_code,
+    Latitude = lat, 
+    Longitude = lng,
+    Popularity = popularity,
+    Distance = distance
+  ) %>%
+  gt() %>%
+  tab_header(
+    title = "Airports near you",
+    subtitle = "Replace with userDistance"
+  ) %>%
+  opt_stylize(style = 6) %>% 
+  tab_options(
+    table.width = pct(100),
+    heading.background.color = "#00436B"
+  ) %>% 
+  fmt_flag(columns = `Country Code`) %>% 
+  cols_label(
+    `Country Code` = ""
+  )
+```
+
+
+```{r}
+nearByGetResults$response$cities %>%
+  relocate(country_code) %>% 
+  arrange(desc(popularity)) %>% 
+  rename(
+    `City Name` = name,
+    `Country Code` = country_code,
+    Latitude = lat, 
+    Longitude = lng,
+    Popularity = popularity,
+    Distance = distance
+  ) %>%
+  gt() %>%
+  tab_header(
+    title = "",
+    subtitle = "Replace with userDistance"
+  ) %>%
+  opt_stylize(style = 2,color = "pink") %>% 
+  tab_options(
+    table.width = pct(100),
+    heading.background.color = "white"
+  ) %>% 
+  fmt_flag(columns = `Country Code`) %>% 
+  cols_label(
+    `Country Code` = ""
+  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
