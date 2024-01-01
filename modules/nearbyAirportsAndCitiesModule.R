@@ -19,37 +19,42 @@ nearbyAirportsAndCitiesServer <- function(id, userLatitude, userLongitude, userD
         content(as = "text", encoding = "UTF-8") %>%
         fromJSON()
 
-      if (requiredOutput == "cities") {
-        citiesDf <- apiResultsList$response$cities %>%
-          relocate(country_code) %>%
-          arrange(desc(popularity)) %>%
-          rename(
-            `Airport Name` = name,
-            `Country Code` = country_code,
-            Latitude = lat,
-            Longitude = lng,
-            Popularity = popularity,
-            Distance = distance
-          )
-
-        return(citiesDf)
-      } else {
-        airportsDf <- apiResultsList$response$airports %>%
-          relocate(country_code) %>%
-          arrange(desc(popularity)) %>%
-          rename(
-            `Airport Name` = name,
-            `IATA Code` = iata_code,
-            `ICAO Code` = icao_code,
-            `Country Code` = country_code,
-            Latitude = lat,
-            Longitude = lng,
-            Popularity = popularity,
-            Distance = distance
-          )
-
-        return(airportsDf)
-      }
+      tryCatch({
+        if (requiredOutput == "cities") {
+          citiesDf <- apiResultsList$response$cities %>%
+            relocate(country_code) %>%
+            arrange(desc(popularity)) %>%
+            rename(
+              `Airport Name` = name,
+              `Country Code` = country_code,
+              Latitude = lat,
+              Longitude = lng,
+              Popularity = popularity,
+              Distance = distance
+            )
+          
+          return(citiesDf)
+        } else {
+          airportsDf <- apiResultsList$response$airports %>%
+            relocate(country_code) %>%
+            arrange(desc(popularity)) %>%
+            rename(
+              `Airport Name` = name,
+              `IATA Code` = iata_code,
+              `ICAO Code` = icao_code,
+              `Country Code` = country_code,
+              Latitude = lat,
+              Longitude = lng,
+              Popularity = popularity,
+              Distance = distance
+            )
+          
+          return(airportsDf)
+        }
+      }, error = function(e){
+        showModal(modalDialog("No data!", "Try a wider radius"))
+      })
+      
     })
 
     if (requiredOutput == "cities") {
